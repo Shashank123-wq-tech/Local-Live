@@ -1,0 +1,62 @@
+# Core web framework
+fastapi==0.115.0
+uvicorn[standard]==0.23.1
+pydantic==2.9.2
+pydantic_core==2.23.4
+slowapi>=0.1.9
+
+# LangChain / LangGraph ecosystem
+langchain==0.3.1
+langchain-community==0.3.1
+langchain-core==0.3.6
+langchain-groq==0.2.0
+langgraph==0.2.28
+langgraph-checkpoint>=1.0.12,<2.0.0
+langgraph-checkpoint-sqlite>=1.0.4,<2.0.0
+langgraph-checkpoint-postgres>=1.0.0,<2.0.0
+langsmith==0.1.129
+
+# LLM provider
+groq==0.11.0
+
+# Database
+pymongo==4.9.1
+SQLAlchemy==2.0.35
+psycopg2-binary>=2.9.9
+psycopg_pool>=3.1.0
+
+# Vector DB
+pymilvus[milvus_lite]==2.5.18
+milvus-lite==2.5.1
+numpy<2
+
+# Geolocation & routing
+geopy==2.4.1
+openrouteservice==2.3.3
+
+# Web search
+tavily-python==0.5.0
+
+# HTTP & networking
+requests==2.32.3
+httpx==0.27.2
+
+# Utilities
+python-dotenv==1.0.1
+tqdm==4.66.5
+PyYAML==6.0.2
+typing_extensions==4.12.2
+
+# Google Maps
+google_search_results==2.4.2
+
+# Auth
+pyjwt[crypto]>=2.8.0
+
+# Lambda ASGI adapter + runtime interface client
+mangum>=0.17.0
+awslambdaric>=1.0.0
+
+# Migrations
+alembic>=1.13.0
+

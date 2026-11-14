@@ -1,0 +1,59 @@
+from langgraph.graph import END, StateGraph
+from state_graph import AgentState
+from agents import (
+    assistant_agent,
+    generator_agent,
+    IoT_engine,
+    GoogleMaps,
+    scrapper,
+    reviewer_agent
+)
+from agents.finalize import finalize_turn
+from routers import (
+    assitant_router,
+    scrapper_router,
+    reviewer_router,
+    IoT_router,
+    googlemaps_router,
+)
+
+def initialize_graph():
+    graph = StateGraph(AgentState)
+    graph.add_node("assistant_agent", assistant_agent)
+    graph.add_node("generator_agent", generator_agent)
+    graph.add_node("IoT_engine", IoT_engine)
+    graph.add_node("GoogleMaps", GoogleMaps)
+    graph.add_node("scrapper", scrapper)
+    graph.add_node("reviewer_agent", reviewer_agent)
+    graph.add_node("finalize_turn", finalize_turn)
+
+    graph.add_conditional_edges(
+        "assistant_agent", assitant_router, {"reviewer_agent": "reviewer_agent",
+                                              "IoT_engine": "IoT_engine",
+                                              "GoogleMaps":"GoogleMaps",
+                                              "scrapper": "scrapper"}
+    )
+
+    graph.add_conditional_edges(
+        "scrapper", scrapper_router, {"generator_agent": "generator_agent"}
+    )
+
+    graph.add_conditional_edges(
+        "IoT_engine", IoT_router, {"generator_agent": "generator_agent", "GoogleMaps": "GoogleMaps"}
+    )
+
+    graph.add_conditional_edges(
+        "GoogleMaps", googlemaps_router, {"generator_agent": "generator_agent", "scrapper": "scrapper"}
+    )
+
+    graph.add_edge("generator_agent", "reviewer_agent")
+
+    graph.add_conditional_edges(
+        "reviewer_agent", reviewer_router, {"IoT_engine": "IoT_engine", "scrapper": "scrapper", "GoogleMaps": "GoogleMaps", "END": "finalize_turn"}
+    )
+
+    graph.add_edge("finalize_turn", END)
+
+    graph.set_entry_point("assistant_agent")
+
+    return graph
