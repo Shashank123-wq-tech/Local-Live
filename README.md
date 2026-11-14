@@ -1,4 +1,4 @@
-# LocaleLive: IoT-Agentic Search Engine
+# LocaleLive: Agentic AI Search Engine
 
 > The pulse of places lives at your fingertips.
 
