@@ -189,7 +189,7 @@ Full docs are hosted at [sensorsconnect.github.io/IoT-Agentic-Search-Engine](htt
 
 ---
 
-## Citation
+## Reference
 
 ```bibtex
 @article{elewah2025agentic,
@@ -209,16 +209,6 @@ Full docs are hosted at [sensorsconnect.github.io/IoT-Agentic-Search-Engine](htt
   journal={IEEE Access},
   year={2024},
   publisher={IEEE}
-}
-```
-
-Full thesis:
-
-```bibtex
-@article{elewah2025sensorsconnect,
-  title={SensorsConnect: World Wide Web for Internet of Things},
-  author={Elewah, Abdelrahman},
-  year={2025}
 }
 ```
 
