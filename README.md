@@ -313,30 +313,6 @@ Check each item:
 - Do not mark a place as verified open when operating status is unknown.
 - Do not fabricate ratings, opening hours, or occupancy values when the source has no value.
 
-## Acknowledgements and Research
-
-This application builds on the concepts and open-source implementation of the SensorsConnect IoT Agentic Search Engine. The original multi-agent workflow and research are acknowledged here.
-
-```bibtex
-@article{elewah2025agentic,
-  title={Agentic Search Engine for Real-Time Internet of Things Data},
-  author={Elewah, Abdelrahman and Elgazzar, Khalid and Elnaffar, Said},
-  journal={Sensors},
-  volume={25},
-  number={19},
-  pages={5995},
-  year={2025},
-  publisher={MDPI}
-}
-
-@article{elewah2024sensorsconnect,
-  title={Sensorsconnect framework: World-wide web for internet of things},
-  author={Elewah, Abdelrahman and Elgazzar, Khalid},
-  journal={IEEE Access},
-  year={2024},
-  publisher={IEEE}
-}
-```
 
 ## License
 
