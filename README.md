@@ -1,4 +1,4 @@
-# LocaleLive Toronto
+# LocaleLive
 ### Agentic AI Search for Local Services
 
 > Find places across Toronto through natural language.
