@@ -159,8 +159,6 @@ Every push to `main` that touches `backend/**` triggers `.github/workflows/ci.ym
 
 The frontend auto-deploys via Vercel directly from the `SensorsConnect/localelive-frontend` repo on push. There is no frontend CI step in this repo.
 
-Full deploy runbook: [`infra/migration-deploy-checklist.md`](./infra/migration-deploy-checklist.md).
-
 ### Self-Hosted (Docker Compose)
 
 Pull and run the backend container:
@@ -176,43 +174,7 @@ docker run -d \
 
 ---
 
-## Documentation
 
-Full docs are hosted at [sensorsconnect.github.io/IoT-Agentic-Search-Engine](https://sensorsconnect.github.io/IoT-Agentic-Search-Engine/) and cover:
-
-- [Architecture & infra](docs/architecture/overview.md)
-- [EC2 → Lambda migration history](docs/architecture/migration-summary.md)
-- [Local development](docs/development/local-dev.md)
-- [Anonymous chat feature](docs/features/anonymous-chat.md)
-- [Location system](docs/location/network-location-guide.md)
-- [Product roadmap](docs/product/roadmap.md)
-
----
-
-## Reference
-
-```bibtex
-@article{elewah2025agentic,
-  title={Agentic Search Engine for Real-Time Internet of Things Data},
-  author={Elewah, Abdelrahman and Elgazzar, Khalid and Elnaffar, Said},
-  journal={Sensors},
-  volume={25},
-  number={19},
-  pages={5995},
-  year={2025},
-  publisher={MDPI}
-}
-
-@article{elewah2024sensorsconnect,
-  title={Sensorsconnect framework: World-wide web for internet of things},
-  author={Elewah, Abdelrahman and Elgazzar, Khalid},
-  journal={IEEE Access},
-  year={2024},
-  publisher={IEEE}
-}
-```
-
----
 
 ## License
 
