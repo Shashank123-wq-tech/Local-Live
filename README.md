@@ -1,180 +1,342 @@
-# LocaleLive: Agentic AI Search Engine
+# LocaleLive Toronto
+### Agentic AI Search for Local Services
 
-> The pulse of places lives at your fingertips.
+> Find places across Toronto through natural language.
 
 **Live Demo**: [localelive.space](https://localelive.space)  
-**Docs**: [sensorsconnect.github.io/IoT-Agentic-Search-Engine](https://sensorsconnect.github.io/IoT-Agentic-Search-Engine/)
 
-## What This Project Does
+LocaleLive is an AI-powered local search application. Ask for a service in ordinary language, and the application interprets the request, searches place data, and returns relevant results with location context.
 
-- Leverages LLMs + RAG to support natural language queries over diverse IoT data streams.
-- Implements a multi-agent architecture (GA-RAG) with Classifier, Retriever, Generator, and Reviewer agents for robust, context-aware responses.
-- Embeds service descriptions using HuggingFace Inference API (BAAI/bge-small-en-v1.5, 384-dim) and stores them in a Milvus Lite HNSW vector database for fast semantic search.
-- Integrates with MongoDB to manage 37,000+ IoT documents across 500 service types, with geospatial indexing for location-aware results.
-- Outperforms generic assistants like Gemini by understanding complex, preference-rich queries and generating actionable, human-like responses.
-- Built with **LangGraph**, **FastAPI**, **Tavily**, **OpenRouteService**, and **Google Maps** — deployed on AWS Lambda + Vercel.
+## What the Application Does
 
-> **Accuracy**: 92% top-1 intent detection for complex user queries  
-> **Coverage**: Toronto region with 500 simulated services and 37,000+ IoT data points  
-> **Response Time**: 99% of queries processed under 4.12 seconds
+- Accepts natural-language requests for local services.
+- Uses a multi-agent workflow to classify requests, retrieve relevant places, generate an answer, and review the response.
+- Uses semantic search over service descriptions with Hugging Face embeddings and Milvus Lite.
+- Stores place records in MongoDB Atlas and supports location-based retrieval.
+- Uses routing, maps, and web search integrations where configured.
+- Runs as Docker containers for deployment on AWS.
 
----
+## Bengaluru Dataset
 
-## Architecture
+The Toronto dataset is prepared from public place records and mapped to the service categories used by the application.
 
-The full architecture is documented in [`infra/ARCHITECTURE.md`](./infra/ARCHITECTURE.md). In brief:
+The preparation workflow includes:
 
-```
-User → localelive.space (Vercel / Next.js 15 + Clerk)
-         ↓
-     api.localelive.space → API Gateway → Lambda
-         ↓
-     FastAPI + LangGraph multi-agent pipeline
-         ↓
-     MongoDB Atlas · Neon Postgres · HuggingFace API · Groq
-```
+- Filtering place records against the selected Bengaluru boundary.
+- Mapping source categories to the application’s service categories.
+- Reviewing suspicious category assignments and duplicate candidates.
+- Preserving source identifiers and provenance where available.
+- Keeping missing ratings, opening hours, and occupancy as unknown rather than inventing values.
 
-**Two hard timeouts to know about:**
-- API Gateway cuts any connection at **29 seconds** — queries that take longer appear to hang.
-- Lambda has a **10-second cold-start init** — heavy imports must be deferred to first request.
+Dataset counts, quality metrics, and category coverage should be added here after the final MongoDB import and validation. Do not treat source confidence as a business rating or verified operating status.
 
-A CloudWatch Events rule fires every 5 minutes to keep the Lambda container warm. See [`docs/ops/lambda-warmup.md`](./docs/ops/lambda-warmup.md).
+## Agent Workflow
 
----
+A query flows through the application’s agent graph:
 
-## Multi-Agent Workflow
+1. **Classifier** identifies whether the user is greeting, searching for a service, or asking a general question.
+2. **Retriever** searches the local place data using service and location information.
+3. **External search** uses configured integrations for open-ended questions or areas without local records.
+4. **Generator** prepares a response based on retrieved context.
+5. **Reviewer** checks the response and can request refinement before it is returned.
 
-Queries flow through a 7-node LangGraph graph:
+The graph and prompts are implemented in the backend’s graph and agent modules.
 
-```
-assistant_agent        → classifies intent (greeting / service search / general question)
-  ├─ IoT_engine        → MongoDB vector + geospatial search (local service data)
-  │    └─ GoogleMaps   → fallback for zones not covered by IoT data
-  ├─ scrapper          → Tavily web search for open-ended questions
-  └─ reviewer_agent    → validates quality, may loop back for refinement
-       └─ finalize_turn
-```
-
-Key files: `backend/src/graph_init.py` (graph definition), `backend/src/agents/` (each node), `backend/src/agents_prompt.py` (prompts).
-
-### Available Services
-
-- Grocery stores, walk-in clinics, car rentals, parks, restaurants, and more (Toronto region)
-- Results ranked by: reputation (ratings), real-time travel time (OpenRouteService), and occupancy data
-
-### Example Query
-
-```
-I want to have dinner with my family at a Middle Eastern restaurant with a good reputation.
-```
-
----
-
-## Tech Stack
+## Technology
 
 | Layer | Technology |
-|-------|-----------|
+|---|---|
 | Frontend | Next.js 15, React 18, TypeScript, Tailwind CSS |
-| Auth | Clerk |
-| Maps | Mapbox GL |
-| Backend | Python 3.11, FastAPI 0.115 |
-| Agent framework | LangGraph 0.2, LangChain 0.3 |
-| LLM | Groq (llama-3.1 family) |
-| IoT data | MongoDB Atlas — geospatial + vector search |
-| Embeddings | HuggingFace Inference API (no local model) |
-| Conversation persistence | Neon PostgreSQL, SQLAlchemy NullPool |
-| Hosting | Vercel (frontend) + AWS Lambda + API Gateway (backend) |
+| Authentication | Clerk |
+| Map display | Mapbox GL |
+| Backend API | Python 3.11, FastAPI |
+| Agent workflow | LangGraph and LangChain |
+| Language model | Groq |
+| Place database | MongoDB Atlas |
+| Vector database | Milvus Lite |
+| Embeddings | Hugging Face Inference API |
+| Routing | OpenRouteService |
+| Web search | Tavily |
+| Containerization | Docker and Docker Compose |
+| Hosting | AWS EC2 with Docker |
 
----
+## Repository Layout
 
-## Environment Variables
+```text
+.
+├── backend/
+│   ├── src/
+│   │   ├── agents/
+│   │   ├── graph_init.py
+│   │   └── agents_prompt.py
+│   ├── requirements_pip.txt
+│   └── Dockerfile
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   ├── package.json
+│   └── Dockerfile
+├── infra/
+│   ├── ARCHITECTURE.md
+│   └── ...
+├── docker-compose.yml
+└── README.md
+```
 
-### Backend (Lambda / local)
+Adjust this tree if your checked-out repository has different paths.
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `GROQ_API_KEY` | Yes | Groq LLM inference |
-| `LLM_MODEL` | Yes | Model name (e.g. `llama-3.1-8b-instant`) |
-| `MONGODB_URL` | Yes | MongoDB Atlas connection string |
-| `HF_API_KEY` | Yes | HuggingFace Inference API (embeddings) |
-| `POSTGRES_URL` | Yes | Neon PostgreSQL (conversation persistence) |
-| `GOOGLE_MAPS_API_KEY` | Yes | Google Maps nearby/text search |
-| `ORS_API_KEY` | Yes | OpenRouteService (travel time) |
-| `TAVILY_API_KEY` | Yes | Tavily web search |
-| `CLERK_JWKS_URL` | Yes | Clerk JWT verification |
-| `CORS_ORIGINS` | Yes | Comma-separated allowed origins |
-| `MILVUS_DB_PATH` | Yes | Path for Milvus Lite DB (`/tmp/milvus_lite.db` on Lambda) |
-| `ENVIRONMENT` | Yes | `production` or `development` |
-| `LANGCHAIN_API_KEY` | No | LangSmith tracing |
-| `LANGCHAIN_TRACING_V2` | No | `true` to enable LangSmith |
+## Configuration
 
-The full list with descriptions lives in [`infra/lambda-env.example`](./infra/lambda-env.example).  
-To pull/push live Lambda env vars: see [`infra/scripts/`](./infra/scripts/).
+Create backend and frontend environment files from the example files. Use real values locally and store production secrets in a secure environment on AWS. Do not commit `.env` files or real API keys.
 
-### Frontend (Vercel)
+### Backend environment
 
-| Variable | Purpose |
-|----------|---------|
-| `NEXT_PUBLIC_BACKEND_URL` | Backend API URL (`https://api.localelive.space`) |
-| `NEXT_PUBLIC_MAPBOX_TOKEN` | Mapbox access token |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (use `pk_live_*` in production) |
-| `CLERK_SECRET_KEY` | Clerk secret key (use `sk_live_*` in production) |
+```dotenv
+GROQ_API_KEY=
+LLM_MODEL=
 
-`NEXT_PUBLIC_*` values are baked into the JS bundle at `next build` time. See [`docs/development/env-guide.md`](./docs/development/env-guide.md) for the full guide.
+MONGODB_URL=
+POSTGRES_URL=
 
----
+HF_API_KEY=
+MILVUS_DB_PATH=/data/milvus/milvus.db
 
-## Local Development
+GOOGLE_MAPS_API_KEY=
+ORS_API_KEY=
+TAVILY_API_KEY=
 
-See [`docs/development/local-dev.md`](./docs/development/local-dev.md) for the full Docker Compose setup. Quick start:
+CLERK_JWKS_URL=
+CORS_ORIGINS=http://localhost:3000
+ENVIRONMENT=development
+LOG_LEVEL=INFO
 
-```bash
-# Backend only (requires backend/.env)
-cd backend
-pip install -r requirements_pip.txt
-uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+LANGCHAIN_API_KEY=
+LANGCHAIN_TRACING_V2=false
+```
 
-# Frontend only (requires frontend/.env.local with Clerk keys)
-cd frontend
-npm install
-npm run dev   # http://localhost:3000
+Set `CORS_ORIGINS` to the deployed frontend origin in production, for example:
 
-# Full stack with Docker Compose
+```dotenv
+CORS_ORIGINS=https://app.example.com
+ENVIRONMENT=production
+```
+
+### Frontend environment
+
+```dotenv
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8001
+NEXT_PUBLIC_MAPBOX_TOKEN=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=/
+NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=/
+```
+
+`NEXT_PUBLIC_*` values are embedded in the frontend during `next build`. Set the production backend URL, Mapbox token, and Clerk publishable key before building the production frontend image. Keep `CLERK_SECRET_KEY` private and provide it only to the running frontend server.
+
+For production, use the Clerk keys and JWKS URL from the same production Clerk instance.
+
+## Local Development with Docker
+
+Prerequisites:
+
+- Docker Desktop with Docker Compose enabled.
+- Backend and frontend environment files populated.
+- Access to the required external services and databases.
+
+From the repository root, start the application:
+
+```powershell
+docker compose up --build -d
+```
+
+Check container status:
+
+```powershell
+docker compose ps
+```
+
+Follow logs:
+
+```powershell
+docker compose logs -f
+```
+
+Open the application and API documentation:
+
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:8001`
+- API docs: `http://localhost:8001/docs`
+
+Stop the stack:
+
+```powershell
+docker compose down
+```
+
+If your Compose file has a different name, pass it with `-f`, for example:
+
+```powershell
 docker compose -f docker-compose.local.yml up --build -d
-# Frontend: http://localhost:3000  Backend: http://localhost:8001
 ```
 
-> The backend exposes interactive API docs at `http://localhost:8000/docs`.
+## Production Deployment on AWS with Docker
 
----
+This deployment uses an AWS EC2 instance to run Docker containers. A reverse proxy handles public HTTPS traffic and routes requests to the frontend and backend containers.
 
-## Deployment
+### 1. Prepare AWS
 
-### Production (Lambda + Vercel)
+Create an EC2 instance with a supported Linux image and install Docker Engine and the Docker Compose plugin.
 
-Every push to `main` that touches `backend/**` triggers `.github/workflows/ci.yml`:
-1. Builds a `linux/amd64` container image with `provenance=false`
-2. Pushes to both Docker Hub (`elewah/localelive-backend`) and Amazon ECR
-3. Calls `aws lambda update-function-code` — the backend auto-deploys
+Configure the instance security group to allow:
 
-The frontend auto-deploys via Vercel directly from the `SensorsConnect/localelive-frontend` repo on push. There is no frontend CI step in this repo.
+| Port | Source | Use |
+|---|---|---|
+| 22 | Your current IP only | SSH administration |
+| 80 | `0.0.0.0/0` and `::/0` | HTTP and certificate validation |
+| 443 | `0.0.0.0/0` and `::/0` | HTTPS application traffic |
 
-### Self-Hosted (Docker Compose)
+Do not expose the frontend or backend container ports publicly when a reverse proxy is used.
 
-Pull and run the backend container:
+Allocate and associate an Elastic IP with the instance so its public address remains stable.
+
+### 2. Configure DNS
+
+Use a domain you own and can edit. Create DNS records that point your application hostnames to the Elastic IP:
+
+| Record type | Host | Value |
+|---|---|---|
+| A | `app` | Your EC2 Elastic IP |
+| A | `api` | Your EC2 Elastic IP |
+
+The example hostnames become:
+
+- Frontend: `https://app.example.com`
+- Backend: `https://api.example.com`
+
+Replace `example.com` with your registered domain. DNS can be managed by your domain registrar or Route 53.
+
+### 3. Configure the reverse proxy
+
+Use a reverse proxy such as Caddy to send each hostname to the correct Docker service. For example:
+
+```caddyfile
+app.example.com {
+    reverse_proxy frontend:3000
+}
+
+api.example.com {
+    reverse_proxy backend:8000
+}
+```
+
+The service names and internal ports must match your Docker Compose configuration. Caddy can obtain and renew HTTPS certificates when the DNS records are correct and ports 80 and 443 reach the proxy.
+
+### 4. Set production variables
+
+Set the frontend production values before building:
+
+```dotenv
+NEXT_PUBLIC_BACKEND_URL=https://api.example.com
+NEXT_PUBLIC_MAPBOX_TOKEN=
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+CLERK_SECRET_KEY=
+```
+
+Set backend production values:
+
+```dotenv
+CORS_ORIGINS=https://app.example.com
+CLERK_JWKS_URL=
+ENVIRONMENT=production
+```
+
+Add all remaining backend credentials required by the application. Do not put backend secrets in the frontend image or in `NEXT_PUBLIC_*` variables.
+
+### 5. Configure Clerk production
+
+In the Clerk dashboard:
+
+1. Create or select the production instance.
+2. Set the application domain to the frontend hostname.
+3. Add the DNS records Clerk provides at the active DNS provider.
+4. Verify the domain in Clerk.
+5. Copy the production publishable key, secret key, and JWKS URL into the correct frontend or backend settings.
+6. Add the frontend domain to the backend CORS origins.
+
+The frontend and backend must use configuration from the same Clerk production instance.
+
+### 6. Build and start the containers
+
+Copy the repository to EC2 using your chosen deployment workflow. From the directory containing the production Docker Compose file:
 
 ```bash
-docker pull elewah/localelive-backend
-docker run -d \
-  --name iot-ase-backend \
-  -p 8000:8000 \
-  --env-file .env \
-  elewah/localelive-backend
+docker compose build
+docker compose up -d
+docker compose ps
 ```
 
----
+Review logs if a service does not start:
 
+```bash
+docker compose logs --tail=200
+```
 
+After changing frontend `NEXT_PUBLIC_*` variables, rebuild the frontend image:
+
+```bash
+docker compose build --no-cache frontend
+docker compose up -d frontend
+```
+
+### 7. Verify the deployment
+
+Check each item:
+
+- `https://app.example.com` loads with a valid certificate.
+- `https://api.example.com/docs` responds if public API documentation is enabled.
+- Sign-up and sign-in work through the production Clerk instance.
+- An authenticated search request reaches the backend.
+- The backend can connect to MongoDB Atlas, PostgreSQL, Milvus, and configured external APIs.
+- Logs contain no missing environment variables or database connection errors.
+
+## Operational Notes
+
+- Keep MongoDB Atlas network access restricted to the deployment’s required source addresses.
+- Persist Milvus data using a Docker volume if it must survive container recreation.
+- Back up databases and configuration separately from the application container.
+- Monitor container health, disk usage, memory usage, and external API limits.
+- Avoid logging API keys, authentication tokens, or full database connection strings.
+- Do not mark a place as verified open when operating status is unknown.
+- Do not fabricate ratings, opening hours, or occupancy values when the source has no value.
+
+## Acknowledgements and Research
+
+This application builds on the concepts and open-source implementation of the SensorsConnect IoT Agentic Search Engine. The original multi-agent workflow and research are acknowledged here.
+
+```bibtex
+@article{elewah2025agentic,
+  title={Agentic Search Engine for Real-Time Internet of Things Data},
+  author={Elewah, Abdelrahman and Elgazzar, Khalid and Elnaffar, Said},
+  journal={Sensors},
+  volume={25},
+  number={19},
+  pages={5995},
+  year={2025},
+  publisher={MDPI}
+}
+
+@article{elewah2024sensorsconnect,
+  title={Sensorsconnect framework: World-wide web for internet of things},
+  author={Elewah, Abdelrahman and Elgazzar, Khalid},
+  journal={IEEE Access},
+  year={2024},
+  publisher={IEEE}
+}
+```
 
 ## License
 
