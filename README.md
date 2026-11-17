@@ -16,7 +16,7 @@ LocaleLive is an AI-powered local search application. Ask for a service in ordin
 - Uses routing, maps, and web search integrations where configured.
 - Runs as Docker containers for deployment on AWS.
 
-## Bengaluru Dataset
+## Toronto Dataset
 
 The Toronto dataset is prepared from public place records and mapped to the service categories used by the application.
 
