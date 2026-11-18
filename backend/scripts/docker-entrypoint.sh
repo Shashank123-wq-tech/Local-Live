@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-
+echo "LocaleLive: entrypoint started"
 # Activate virtual environment
 source /app/.venv/bin/activate
 
