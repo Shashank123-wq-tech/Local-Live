@@ -8,12 +8,12 @@ __pycache__/
 .env
 .env.*
 
+.git/
 .venv/
 venv/
 locallive/
 **/.venv/
 **/venv/
-.git/
 __pycache__/
 *.pyc
 .env

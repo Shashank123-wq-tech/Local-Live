@@ -1,51 +1,39 @@
-# Use Python 3.11 as the base image
 FROM python:3.11-slim
 
-# Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    TZ=America/Toronto
+    VIRTUAL_ENV=/opt/venv \
+    PATH="/opt/venv/bin:$PATH"
 
-# Set working directory
 WORKDIR /app
 
-# Install system dependencies (including libpq for psycopg2)
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
-    libpq-dev \
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+       build-essential \
+       curl \
+       libpq-dev \
+       ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements files
-COPY requirements.txt requirements_pip.txt ./
+# Keep the container's Python environment outside the copied project.
+RUN python -m venv /opt/venv
 
-# Create and activate virtual environment
-RUN python -m venv .venv
-ENV PATH="/app/.venv/bin:$PATH"
+COPY requirements_pip.txt ./
 
-# Upgrade pip and install wheel
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir wheel
+RUN python -m pip install --no-cache-dir --upgrade pip wheel \
+    && python -m pip install --no-cache-dir -r requirements_pip.txt \
+    && python -m pip check
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements_pip.txt
-
-# Create scripts directory and copy entrypoint script
-RUN mkdir -p /app/scripts
-COPY scripts/docker-entrypoint.sh /app/scripts/
-RUN chmod +x /app/scripts/docker-entrypoint.sh
-
-# Copy application code
 COPY . .
 
-# Expose the port your app runs on
-EXPOSE 8000
+RUN sed -i 's/\r$//' /app/scripts/docker-entrypoint.sh \
+    && chmod 755 /app/scripts/docker-entrypoint.sh \
+    && /bin/bash -n /app/scripts/docker-entrypoint.sh \
+    && test -f /app/src/main.py \
+    && test -f /app/alembic.ini
 
-# Set the working directory to src
 WORKDIR /app/src
 
-# Default: run uvicorn (EC2/local)
-# Lambda override via image config: EntryPoint=[python, -m, awslambdaric], Command=[main.handler]
-ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
-CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port \"${PORT:-8000}\" --workers 1"]
+EXPOSE 10000
+
+ENTRYPOINT ["/bin/bash", "/app/scripts/docker-entrypoint.sh"]
