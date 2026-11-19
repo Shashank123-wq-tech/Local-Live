@@ -4,6 +4,7 @@ import httpx
 from dotenv import load_dotenv
 from pymilvus import MilvusClient, DataType
 from tqdm import tqdm
+import atexit
 
 logger = logging.getLogger(__name__)
 
@@ -11,30 +12,82 @@ load_dotenv(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path
 
 _DEFAULT_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "milvus_lite.db")
 MILVUS_URI = os.environ.get("MILVUS_DB_PATH", _DEFAULT_DB_PATH)
-COLLECTION_NAME = "services"
-DENSE_DIM = 384  # BAAI/bge-small-en-v1.5 output dimension
+COLLECTION_NAME = "services_openai_small_384"
+DENSE_DIM = 384  # OpenAI
 SERVICES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "Services_description_V2.txt")
 
-HF_API_URL = "https://router.huggingface.co/hf-inference/models/BAAI/bge-small-en-v1.5"
-HF_API_KEY = os.environ.get("HF_API_KEY", "")
+OPENAI_EMBEDDING_URL = "https://api.openai.com/v1/embeddings"
+OPENAI_EMBEDDING_MODEL = "text-embedding-3-small"
+_embedding_client = httpx.Client(
+    transport=httpx.HTTPTransport(
+        retries=3,
+        verify=True,
+    ),
+    timeout=httpx.Timeout(60.0, connect=15.0),
+)
+
+atexit.register(_embedding_client.close)
 
 _client: MilvusClient | None = None
 
 
 def _embed(texts: list[str]) -> list[list[float]]:
-    if not HF_API_KEY:
-        raise RuntimeError("HF_API_KEY is not set; add it to backend/.env or the process environment")
+    if not texts:
+        return []
 
-    headers = {"Authorization": f"Bearer {HF_API_KEY}"}
-    response = httpx.post(
-        HF_API_URL,
-        headers=headers,
-        json={"inputs": texts},
-        timeout=30,
+    if any(not isinstance(text, str) or not text.strip() for text in texts):
+        raise ValueError("Embedding inputs must be non-empty strings")
+
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise RuntimeError("OPENAI_API_KEY is missing or empty")
+
+    response = _embedding_client.post(
+        OPENAI_EMBEDDING_URL,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "model": OPENAI_EMBEDDING_MODEL,
+            "input": texts,
+            "dimensions": DENSE_DIM,
+            "encoding_format": "float",
+        },
+        timeout=httpx.Timeout(60.0, connect=15.0),
     )
-    response.raise_for_status()
-    return response.json()
 
+    if response.is_error:
+        # Report the provider's error without exposing the API key.
+        try:
+            error = response.json().get("error", {})
+            message = (
+                error.get("message", "Embedding request failed")
+                if isinstance(error, dict)
+                else str(error)
+            )
+        except ValueError:
+            message = "OpenAI returned a non-JSON error response"
+
+        message = message.replace(api_key, "[REDACTED]")
+        raise RuntimeError(
+            f"OpenAI embeddings failed: HTTP {response.status_code}: {message}"
+        )
+
+    payload = response.json()
+    items = sorted(payload.get("data", []), key=lambda item: item["index"])
+
+    if [item["index"] for item in items] != list(range(len(texts))):
+        raise RuntimeError("OpenAI returned an unexpected set of embedding indices")
+
+    vectors = [item["embedding"] for item in items]
+
+    if any(len(vector) != DENSE_DIM for vector in vectors):
+        raise RuntimeError(
+            f"Expected {DENSE_DIM}-dimensional embeddings"
+        )
+
+    return vectors
 
 def _get_client() -> MilvusClient:
     global _client

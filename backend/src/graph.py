@@ -30,18 +30,9 @@ if POSTGRES_URL and POSTGRES_URL.startswith(("postgresql://", "postgres://")):
     )
     memory = PostgresSaver(pool)
     memory.setup()
+    logging.info("Using PostgreSQL checkpointer for conversation persistence")
 
     # One-time cleanup: clear stale checkpoints after schema migration
-    try:
-        with pool.connection() as conn_:
-            conn_.execute("DELETE FROM checkpoints")
-            conn_.execute("DELETE FROM checkpoint_writes")
-            conn_.execute("DELETE FROM checkpoint_blobs")
-        logging.info("Cleared stale LangGraph checkpoints for schema migration")
-    except Exception as e:
-        logging.warning(f"Could not clear old checkpoints: {e}")
-
-    logging.info("Using PostgreSQL checkpointer for conversation persistence")
 else:
     from langgraph.checkpoint.sqlite import SqliteSaver
     import sqlite3
@@ -50,14 +41,6 @@ else:
     memory.setup()
     # Clear stale checkpoints so an AgentState schema change (e.g. new field) doesn't
     # cause the SQLite saver to replay an incompatible snapshot and return empty results.
-    try:
-        db.execute("DELETE FROM checkpoints")
-        db.execute("DELETE FROM writes")
-        db.commit()
-        logging.info("Cleared stale SQLite checkpoints on startup")
-    except Exception as e:
-        db.rollback()
-        logging.warning(f"Could not clear SQLite checkpoints: {e}")
     logging.warning("Using SQLite file checkpointer (not recommended for production)")
 
 # Compile the graph

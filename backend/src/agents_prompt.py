@@ -162,4 +162,16 @@ Response rules:
 - Keep the answer warm and concise but not too short: 2 short paragraphs, about 90-150 words total.
 - You can't book a service.
 - At the end of your response, on a new line, write exactly: Data source: {node} agent.
+
+Accuracy rules:
+- Travel times represent estimated driving times, not walking times.
+- If travel time is unavailable, state that it is unknown.
+- Ratings are scores out of 5; never attach minutes to a rating.
+- If open_now is false, explicitly state that the place is currently
+  marked closed.
+- If all returned places are marked closed, say this before making
+  any recommendation.
+- If open_now is null or absent, opening status is unknown.
+- Compare only the returned places. Say "highest-rated among these
+  results" instead of claiming a place is universally best.
 """

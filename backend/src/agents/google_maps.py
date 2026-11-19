@@ -101,7 +101,9 @@ def _build_results_from_places(places, lat, lon):
             'entity_name': name,
             'address': address,
             'rate': rating,
-            'estimated_travel_time': tt_str
+            'estimated_travel_time': tt_str,
+            "travel_mode": "driving",
+            "open_now": place.get("opening_hours", {}).get("open_now"),
         })
         place_dicts.append(_build_place_dict(place, tt_str))
     return results, place_dicts
@@ -134,7 +136,9 @@ def GoogleMaps(state: AgentState):
         logging.error(f"Invalid coordinates received: {coordinates}")
         return prepaer_states({
             "node": "GoogleMaps",
-            "call": "generator_agent"
+            "call": "generator_agent",
+            "context": "",
+            "places": [],
         })
 
     try:
@@ -144,7 +148,9 @@ def GoogleMaps(state: AgentState):
         logging.error(f"Coordinates are not valid numbers: {e}")
         return prepaer_states({
             "node": "GoogleMaps",
-            "call": "generator_agent"
+            "call": "generator_agent",
+            "context": "",
+            "places": [],
         })
 
     query = state.get("query", "")
@@ -318,5 +324,7 @@ def GoogleMaps(state: AgentState):
         logger.warning(f"google_maps no_results rid={rid} query='{query[:80]}' duration={total_elapsed:.2f}s")
         return prepaer_states({
             "node": "GoogleMaps",
-            "call": "generator_agent"
+            "call": "generator_agent",
+            "context": "",
+            "places": [],
         })

@@ -15,6 +15,7 @@ from routers import (
     reviewer_router,
     IoT_router,
     googlemaps_router,
+    generator_router,
 )
 
 def initialize_graph():
@@ -46,7 +47,16 @@ def initialize_graph():
         "GoogleMaps", googlemaps_router, {"generator_agent": "generator_agent", "scrapper": "scrapper"}
     )
 
-    graph.add_edge("generator_agent", "reviewer_agent")
+    graph.add_conditional_edges(
+        "generator_agent",
+         generator_router,
+         {
+        "GoogleMaps": "GoogleMaps",
+        "scrapper": "scrapper",
+        "reviewer_agent": "reviewer_agent",
+        "finalize_turn": "finalize_turn",
+         },
+    ) 
 
     graph.add_conditional_edges(
         "reviewer_agent", reviewer_router, {"IoT_engine": "IoT_engine", "scrapper": "scrapper", "GoogleMaps": "GoogleMaps", "END": "finalize_turn"}

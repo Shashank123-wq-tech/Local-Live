@@ -17,18 +17,34 @@ def generator_agent(state: AgentState):
     from_node = state.get("node", "")
     logger.info(f"generator_agent start rid={rid} from_node={from_node} context_present={bool(context)}")
 
-    if context=="":
-        if state["node"]=='IoT_engine':
-            logger.info(f"generator_agent fallback rid={rid} IoT_engine had no results -> GoogleMaps")
-            return prepaer_states({"node": "generator_agent", "response": "", "call": "GoogleMaps"})
-        elif state["node"]=='GoogleMaps':
-            logger.info(f"generator_agent fallback rid={rid} GoogleMaps had no results -> scrapper")
-            return prepaer_states({"node": "generator_agent", "response": "", "call": "scrapper"})
+    if not context:
+        if from_node == "IoT_engine":
+            target = "GoogleMaps"
+        elif from_node == "GoogleMaps":
+            target = "scrapper"
         else:
-            logger.info(f"generator_agent fallback rid={rid} node={state['node']} -> cannot_handle")
-            return prepaer_states({"node": "generator_agent", "response": "I can't handle this query", "call": "scrapper"})
-
-
+            answer = (
+                 "I couldn't retrieve reliable results for this search. "
+                 "Please try a more specific location or try again later."
+            )
+            return prepaer_states({
+                "node": "generator_agent",
+                "response": answer,
+                "context": "",
+                "places": [],
+                "call": "finalize_turn",
+            })  
+        logger.info(
+            "generator_agent fallback rid=%s from=%s -> %s",
+            rid, from_node, target,
+        )
+        return prepaer_states({
+            "node": "generator_agent",
+            "response": "",
+            "context": "",
+            "places": [],
+            "call": target,
+        })    
     if state["node"]=='scrapper':
         node =state["node"]
 
@@ -46,4 +62,9 @@ def generator_agent(state: AgentState):
     response = llm.invoke(prompt)
     logger.debug(f"generator_agent LLM response preview: {str(response.content)[:200]}")
     logger.info(f"generator_agent complete rid={rid} from_node={from_node}")
-    return prepaer_states({"messages": [response], "node": "generator_agent", "response": response.content})
+    return prepaer_states({
+        "messages": [response],
+        "node": "generator_agent",
+        "response": response.content,
+        "call": "reviewer_agent",
+    })
