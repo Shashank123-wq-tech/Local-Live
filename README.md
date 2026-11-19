@@ -3,7 +3,7 @@
 
 > Find places across Toronto through natural language.
 
-**Live Demo**: [localelive.space](https://frontend-local-live.vercel.app/)  
+**Live Demo**: [localelive.vercel](https://frontend-local-live.vercel.app/)  
 
 LocaleLive is an AI-powered local search application. Ask for a service in ordinary language, and the application interprets the request, searches place data, and returns relevant results with location context.
 
