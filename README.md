@@ -58,7 +58,6 @@ The graph and prompts are implemented in the backend’s graph and agent modules
 | Routing | OpenRouteService |
 | Web search | Tavily |
 | Containerization | Docker and Docker Compose |
-| Hosting | AWS EC2 with Docker | (Next Step)
 
 ## Repository Layout
 
