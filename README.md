@@ -182,7 +182,7 @@ If your Compose file has a different name, pass it with `-f`, for example:
 docker compose -f docker-compose.local.yml up --build -d
 ```
 
-## Production Deployment on AWS with Docker
+## Production Deployment on AWS with Docker(Next Step: In Progress)
 
 This deployment uses an AWS EC2 instance to run Docker containers. A reverse proxy handles public HTTPS traffic and routes requests to the frontend and backend containers.
 
