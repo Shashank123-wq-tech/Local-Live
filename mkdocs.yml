@@ -1,8 +1,9 @@
-site_name: LocaleLive Docs
-site_url: https://sensorsconnect.github.io/IoT-Agentic-Search-Engine/
-site_description: Documentation for the LocaleLive IoT Agentic Search Engine
-repo_url: https://github.com/SensorsConnect/IoT-Agentic-Search-Engine
-repo_name: SensorsConnect/IoT-Agentic-Search-Engine
+site_name: Local-Live Docs
+site_url: https://shashank123-wq-tech.github.io/Local-Live/
+site_description: Documentation for the Local-Live Agentic AI Search Engine
+
+repo_url: https://github.com/Shashank123-wq-tech/Local-Live
+repo_name: Shashank123-wq-tech/Local-Live
 edit_uri: edit/main/docs/
 
 theme:
@@ -20,6 +21,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+
   features:
     - navigation.tabs
     - navigation.sections
@@ -31,22 +33,20 @@ theme:
 nav:
   - Home: index.md
   - Architecture:
-    - Overview: architecture/overview.md
-    - Migration Summary: architecture/migration-summary.md
-    - Deploy Checklist: architecture/migration-deploy-checklist.md
-  - Operations:
-    - Lambda Warm-Up: ops/lambda-warmup.md
+      - Overview: architecture/overview.md
+      - Migration Summary: architecture/migration-summary.md
+      - Deploy Checklist: architecture/migration-deploy-checklist.md
   - Development:
-    - Local Dev Setup: development/local-dev.md
-    - Environment Variables: development/env-guide.md
+      - Local Dev Setup: development/local-dev.md
+      - Environment Variables: development/env-guide.md
   - Features:
-    - Anonymous Chat: features/anonymous-chat.md
+      - Anonymous Chat: features/anonymous-chat.md
   - Location System:
-    - Network Location Guide: location/network-location-guide.md
-    - Auto Location Update: location/auto-location-update.md
-    - Auto Location Fix: location/auto-location-fix.md
-    - Loading State: location/loading-state.md
-    - Debug Guide: location/debug-guide.md
-    - Troubleshooting: location/troubleshooting.md
+      - Network Location Guide: location/network-location-guide.md
+      - Auto Location Update: location/auto-location-update.md
+      - Auto Location Fix: location/auto-location-fix.md
+      - Loading State: location/loading-state.md
+      - Debug Guide: location/debug-guide.md
+      - Troubleshooting: location/troubleshooting.md
   - Product:
-    - Roadmap: product/roadmap.md
+      - Roadmap: product/roadmap.md
